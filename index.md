@@ -1,2 +1,6 @@
-Welcome to my blog.
-I will share my cybersecurity learning progress resolving labs etc.
+---
+layout: home
+title: Home
+---
+
+Programming, systems, CS.
