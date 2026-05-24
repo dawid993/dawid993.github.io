@@ -191,7 +191,7 @@ Users/OMEN/AppData/Roaming/[REDACTED]
 
 `AppData/Roaming` stores user-specific application data that follows the user profile.
 
-## 6. What is the IP address of the attacker?
+## 7. What is the IP address of the attacker?
 
 Inside that directory we can observe the `ad.trace` file, which stores logs.
 
