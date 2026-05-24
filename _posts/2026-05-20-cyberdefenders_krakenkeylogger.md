@@ -186,10 +186,12 @@ At this point, our task becomes determining whether any remote access software i
 I did not find anything interesting in Program Files, so I used a more basic approach and manually listed directories. Eventually I found:
 
 ```text
-Users/OMEN/AppData/Roaming/AnyDesk
+Users/OMEN/AppData/Roaming/[REDACTED]
 ```
 
 `AppData/Roaming` stores user-specific application data that follows the user profile.
+
+## 6. What is the IP address of the attacker?
 
 Inside that directory we can observe the `ad.trace` file, which stores logs.
 
