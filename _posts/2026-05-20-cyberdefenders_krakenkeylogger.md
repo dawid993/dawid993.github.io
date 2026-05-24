@@ -4,18 +4,23 @@ title: KrakenKeylogger
 permalink: /cyberdefenders_krakenkeylogger/
 ---
 
-Hello,
-Today I am going to solve KrakenKeylogger lab at cyberdefenders site.
+# KrakenKeylogger
 
-<strong>1.What is the the web messaging app the employee used to talk to the attacker?</strong>
+Today I am going to solve the KrakenKeylogger lab on the CyberDefenders site.
 
-At the begining I was searching for any app installed in Program Files, later seraching also in different directories but I wasn't able to find anything. Then I found out about wpndatabase.db.
+## 1. What is the web messaging app the employee used to talk to the attacker?
 
-wpndatabase.db is a local database file in Windows 10 and Windows 11 that stores system and application notifications. It belongs to the Windows Push Notification (WPN) service.
+At the beginning, I searched for any application installed in Program Files. Later, I searched different directories as well, but I was not able to find anything. Then I discovered `wpndatabase.db`.
 
-File location is <strong>Users/OMEN/AppData/Local/Microsoft/Windows/Notifications/wpndatabase.db</strong>
+`wpndatabase.db` is a local database file in Windows 10 and Windows 11 that stores system and application notifications. It belongs to the Windows Push Notification (WPN) service.
 
-You can open it with sqlitebrowser
+File location:
+
+```text
+Users/OMEN/AppData/Local/Microsoft/Windows/Notifications/wpndatabase.db
+```
+
+You can open it with SQLiteBrowser.
 
 <figure>
   <img
@@ -28,7 +33,7 @@ You can open it with sqlitebrowser
   </figcaption>
 </figure>
 
-When you search throughout all records in you can find 
+When you search through all records, you can find:
 
 <pre>
 &lt;toast launch=&quot;0|0|Default|0|https://web.[REDACTED].org/|p#https://web.[REDACTED].org/#&quot; displayTimestamp=&quot;2023-07-11T16:57:15Z&quot;&gt;
@@ -45,25 +50,32 @@ When you search throughout all records in you can find
  &lt;/actions&gt;
 &lt;/toast&gt;
 </pre>
-It becomes clear what app is used.
 
-<strong>2. What is the password for the protected ZIP file sent by the attacker to the employee?</strong>
+It becomes clear which application was used.
 
-Have a closer look into toast message. It contains password.
+## 2. What is the password for the protected ZIP file sent by the attacker to the employee?
 
-<strong>3. What domain did the attacker use to download the second stage of the malware?</strong>
+A closer look at the toast message reveals the password.
 
-So in toast message you have a hint that zip file was downloaded. Let's find it by
+## 3. What domain did the attacker use to download the second stage of the malware?
 
-<pre>find . -name '*.zip'</pre>
+The toast message suggests that a ZIP archive was downloaded. Let's find it:
 
-What you should find is: 
-<pre>./Users/OMEN/Downloads/project templet test.zip</pre>
+```bash
+find . -name '*.zip'
+```
 
-When you got to that folder you realize it was already unziped. Go to that folder and observe template.lnk file.
+Result:
 
-It was tricky for me because usually you would use lecmd under windows however on linux you need to instal dotnet env and lecmd. I did it but for some reason some data was truncated. So I searched and realized exiftool can be used to check what is inside.
+```text
+./Users/OMEN/Downloads/project templet test.zip
+```
 
+When you go to that folder, you realize it was already unzipped. Inspect the `template.lnk` file.
+
+It was tricky for me because usually you would use LECmd on Windows. However, on Linux you need to install the .NET environment and LECmd. I did that, but for some reason some data was truncated.
+
+I searched further and realized ExifTool can be used to inspect the file contents.
 
 <figure>
   <img
@@ -72,23 +84,20 @@ It was tricky for me because usually you would use lecmd under windows however o
     width="900">
 
   <figcaption>
-    Obfuscated powershell script in template.lnk
+    Obfuscated PowerShell script inside template.lnk
   </figcaption>
 </figure>
 
-I used ChatGpt to write me same logic in python code and decode url (it's in one of variables in powershell script).
+I used ChatGPT to recreate the string deobfuscation logic in Python and decode the URL.
 
-<pre>
-
+```python
 def decode_string(s: str) -> str:
     """
     Replicates the PowerShell string deobfuscation logic.
     """
 
-    # Reverse whole string
     s = s[::-1]
 
-    # Reverse every 2-character chunk
     decoded = "".join(
         s[i:i+2][::-1]
         for i in range(0, len(s), 2)
@@ -103,13 +112,96 @@ if __name__ == "__main__":
 
     decoded = decode_string(encoded)
 
-    print("\nDecoded:")
     print(decoded)
-</pre>
+```
 
-Script prints url used by attacker
+The script prints the URL used by the attacker.
 
+## 4. What is the name of the command that the attacker injected using one of the installed LOLAPPS on the machine to achieve persistence?
 
+I opened the following site to read more about LOLAPPS:
 
+https://lolapps-project.github.io/
 
+Now we need to determine which application was used in this case.
 
+I used Regripper on Kali Linux to parse the `SOFTWARE` hive and understand what is executed during system startup.
+
+Please note that it is usually a good idea to merge transaction logs to get the full picture.
+
+```bash
+regripper -r SOFTWARE -p run
+```
+
+It becomes clear that the application used in the attack was Greenshot.
+
+<figure>
+  <img
+    src="{{ '/assets/images/posts/krakenkeylogger/regripper.webp' | relative_url }}"
+    alt="Regripper output"
+    width="900">
+
+  <figcaption>
+    Regripper used to inspect Windows registry startup entries
+  </figcaption>
+</figure>
+
+Based on the previously referenced site, we can read more about Greenshot persistence techniques.
+
+> Any Greenshot plugin can contain persistence...
+
+Let's find the `.ini` file:
+
+```bash
+find . -name 'Greenshot.ini'
+```
+
+Location:
+
+```text
+./Users/OMEN/AppData/Roaming/Greenshot/Greenshot.ini
+```
+
+<figure>
+  <img
+    src="{{ '/assets/images/posts/krakenkeylogger/greenshot.webp' | relative_url }}"
+    alt="Greenshot.ini"
+    width="900">
+
+  <figcaption>
+    Greenshot.ini configuration file
+  </figcaption>
+</figure>
+
+## 5. What is the complete path of the malicious file that the attacker used to achieve persistence?
+
+Based on the previous question and my research, every time Windows starts, Greenshot starts as well. Therefore, all commands configured in `Greenshot.ini` are potential persistence mechanisms.
+
+## 6. What is the name of the application the attacker utilized for data exfiltration?
+
+Based on MITRE ATT&CK technique T1219, an adversary may use legitimate remote access software to establish command and control communication.
+
+At this point, our task becomes determining whether any remote access software is installed.
+
+I did not find anything interesting in Program Files, so I used a more basic approach and manually listed directories. Eventually I found:
+
+```text
+Users/OMEN/AppData/Roaming/AnyDesk
+```
+
+`AppData/Roaming` stores user-specific application data that follows the user profile.
+
+Inside that directory we can observe the `ad.trace` file, which stores logs.
+
+After researching how IP-related entries are logged, I searched for strings such as `from`, which revealed the attacker's IP address.
+
+<figure>
+  <img
+    src="{{ '/assets/images/posts/krakenkeylogger/ip.webp' | relative_url }}"
+    alt="Attacker IP"
+    width="900">
+
+  <figcaption>
+    Attacker IP address logged inside ad.trace
+  </figcaption>
+</figure>
