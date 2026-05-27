@@ -4,11 +4,9 @@ title: KrakenKeylogger
 permalink: /cyberdefenders_krakenkeylogger/
 ---
 
-# KrakenKeylogger
-
 Today I am going to solve the KrakenKeylogger lab on the CyberDefenders site.
 
-## 1. What is the web messaging app the employee used to talk to the attacker?
+### 1. What is the web messaging app the employee used to talk to the attacker?
 
 At the beginning, I searched for any application installed in Program Files. Later, I searched different directories as well, but I was not able to find anything. Then I discovered `wpndatabase.db`.
 
@@ -53,11 +51,11 @@ When you search through all records, you can find:
 
 It becomes clear which application was used.
 
-## 2. What is the password for the protected ZIP file sent by the attacker to the employee?
+### 2. What is the password for the protected ZIP file sent by the attacker to the employee?
 
 A closer look at the toast message reveals the password.
 
-## 3. What domain did the attacker use to download the second stage of the malware?
+### 3. What domain did the attacker use to download the second stage of the malware?
 
 The toast message suggests that a ZIP archive was downloaded. Let's find it:
 
@@ -117,7 +115,7 @@ if __name__ == "__main__":
 
 The script prints the URL used by the attacker.
 
-## 4. What is the name of the command that the attacker injected using one of the installed LOLAPPS on the machine to achieve persistence?
+### 4. What is the name of the command that the attacker injected using one of the installed LOLAPPS on the machine to achieve persistence?
 
 I opened the following site to read more about LOLAPPS:
 
@@ -173,11 +171,11 @@ Location:
   </figcaption>
 </figure>
 
-## 5. What is the complete path of the malicious file that the attacker used to achieve persistence?
+### 5. What is the complete path of the malicious file that the attacker used to achieve persistence?
 
 Based on the previous question and my research, every time Windows starts, Greenshot starts as well. Therefore, all commands configured in `Greenshot.ini` are potential persistence mechanisms.
 
-## 6. What is the name of the application the attacker utilized for data exfiltration?
+### 6. What is the name of the application the attacker utilized for data exfiltration?
 
 Based on MITRE ATT&CK technique T1219, an adversary may use legitimate remote access software to establish command and control communication.
 
@@ -191,7 +189,7 @@ Users/OMEN/AppData/Roaming/[REDACTED]
 
 `AppData/Roaming` stores user-specific application data that follows the user profile.
 
-## 7. What is the IP address of the attacker?
+### 7. What is the IP address of the attacker?
 
 Inside that directory we can observe the `ad.trace` file, which stores logs.
 
@@ -207,3 +205,9 @@ After researching how IP-related entries are logged, I searched for strings such
     Attacker IP address logged inside ad.trace
   </figcaption>
 </figure>
+
+### Conclusion
+
+This lab demonstrates how attackers can combine social engineering, LOLAPPS, PowerShell obfuscation, and legitimate remote access tools to compromise a system and maintain persistence.
+
+It is also a good reminder that valuable forensic artifacts are often hidden in less obvious locations such as notification databases, .lnk metadata, application logs, and configuration files.
